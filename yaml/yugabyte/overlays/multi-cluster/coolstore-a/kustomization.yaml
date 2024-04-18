@@ -1,0 +1,36 @@
+# Note that the region and zone has been set to ap-southeast-1 / 1a for coolstore-a
+# Please make the appropriate changes, if need be, accordingly
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../common/
+- ../../../create-databases/
+
+patches:
+- target:
+    kind: StatefulSet
+    name: yb-master
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/5/value
+      value: "yb-master-0.coolstore-a.yb-masters.demo.svc.clusterset.local"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/6/value
+      value: "${CLUSTER_REGIONS[0]}"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/9/value
+      value: "${CLUSTER_REGIONS[0]}"
+- target:
+    kind: StatefulSet
+    name: yb-tserver
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/5/value
+      value: "yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/6/value
+      value: "${CLUSTER_REGIONS[0]}"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/7/value
+      value: "${CLUSTER_REGIONS[0]}"

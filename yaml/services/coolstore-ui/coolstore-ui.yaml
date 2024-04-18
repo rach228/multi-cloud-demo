@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.openshift.io/connects-to: order-cart,catalog,inventory,order
+  labels:
+    app: coolstore-ui
+    app.openshift.io/runtime: nodejs
+    app.kubernetes.io/component: coolstore-ui
+    app.kubernetes.io/instance: coolstore-ui
+    app.kubernetes.io/part-of: coolstore
+  name: coolstore-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coolstore-ui
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: coolstore-ui
+    spec:
+      containers:
+      - image: quay.io/rhsgsa/coolstore-ui:20230918
+        name: coolstore-ui
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: OPENSHIFT_BUILD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        envFrom:
+          - configMapRef:
+              name: coolstore-ui-config
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: coolstore-ui
+    app.kubernetes.io/component: coolstore-ui
+    app.kubernetes.io/instance: coolstore-ui
+  name: coolstore-ui
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: coolstore-ui
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app: coolstore-ui
+    app.kubernetes.io/component: coolstore-ui
+    app.kubernetes.io/instance: coolstore-ui
+  name: coolstore-ui
+spec:
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  to:
+    kind: Service
+    name: coolstore-ui
+    weight: null

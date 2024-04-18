@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+
+patches:
+- patch: |-
+    - op: replace
+      path: "/spec/template/spec/containers/0/env/1/value"
+      value: "jdbc:postgresql://yb-tserver-service.demo.svc.clusterset.local:5433/inventory?options=-c%20yb_read_from_followers%3Dtrue%20-c%20default_transaction_read_only%3Dtrue"
+  target:
+    kind: Deployment
+    name: inventory
